@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:25:44 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/05/15 14:46:31 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/05/21 17:09:47 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,5 +25,6 @@ int		process_args(char **av);
 
 void	error_m1(void);
 void	error_m2(int i);
+void	error_m3(void);
 
 #endif

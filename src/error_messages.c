@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/15 09:48:37 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/05/15 14:36:15 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/05/21 17:10:32 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,5 +39,11 @@ void	error_m2(int i)
 		printf("<dogle_cooldown> should be a time (in milliseconds)\n");
 	else if (i == 8)
 		printf("schedule needs to be 'fifo' or 'edf'\n");
+	exit(1);
+}
+
+void error_m3(void)
+{
+	printf("the numbers schould always be positive\n");
 	exit(1);
 }

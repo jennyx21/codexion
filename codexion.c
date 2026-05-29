@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:24:43 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/05/15 11:52:00 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/05/21 17:21:13 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,10 @@
 int	main(int ac, char **av)
 {
 	if (ac == 9)
-	{
 		process_args(av);
-	}
 	else
+	{
 		error_m1();
+		exit(1);
+	}
 }
