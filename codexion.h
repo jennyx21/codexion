@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:25:44 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/06/17 09:36:53 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/06/26 17:26:25 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,8 +39,8 @@ typedef struct s_coder
 {
 	int				id;
 	pthread_t		coder;
-	t_dongle		left_dongle;
-	t_dongle		right_dognle;
+	t_dongle		*left_dongle;
+	t_dongle		*right_dongle;
 	long long		time_to_bournout;
 	long long		time_to_compile;
 	long long		time_to_debug;
