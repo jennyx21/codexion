@@ -3,7 +3,7 @@ CC       := gcc
 AR       := ar
 ARFLAGS  := rcs
 # DEBUGFLAGS := -g -fsanitize=address 
-# CFLAGS   := -Wall -Wextra -Werror $(DEBUGFLAGS)
+CFLAGS   := -Wall -Wextra -Werror -lpthread $(DEBUGFLAGS)
 OBJDIR   := obj
 
 SRC =	codexion.c\
