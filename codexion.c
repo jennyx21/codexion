@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:24:43 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/06/29 22:47:37 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/01 05:22:07 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,22 @@ long long	get_time(void)
 	gettimeofday(&tv, NULL);
 	return (((long long)tv.tv_sec * 1000 + tv.tv_usec / 1000));
 }
+void take_a_dongle(t_dongle *dongle, t_coder *coder)
+{
+	t_request	*req;
+
+	req = malloc(sizeof(t_request));
+	pthread_mutex_lock(&coder->shared->mutex);
+	coder->shared->req_count++;
+	req->id = coder->shared->req_count;
+	pthread_mutex_unlock(&coder->shared->mutex);
+	req->deadline = coder->last_compile + coder->time_to_burnout;
+	if (strcmp(coder->shared->schedule, "fifo") == 0)
+		req->priority = req->id;
+	else
+		req->priority = req->deadline;
+
+}
 
 void	take_dongles( t_coder *coder)
 {
@@ -27,9 +43,9 @@ void	take_dongles( t_coder *coder)
 	i = 0;
 	if (coder->id % 2 == 0 || coder->id == 0)
 	{
-		if (pthread_mutex_lock(&coder->left_dongle->dongle) == 0)
-			printf("%lld coder %d takes the left dongle\n",
-				(get_time() - coder->shared->start_time), coder->id);
+		take_a_dongle(coder->left_dongle, coder);
+		printf("%lld coder %d takes the left dongle\n",
+			(get_time() - coder->shared->start_time), coder->id);
 		if (pthread_mutex_lock(&coder->right_dongle->dongle) == 0)
 			printf("%lld coder %d takes the right dongle\n",
 				(get_time() - coder->shared->start_time), coder->id);
@@ -115,7 +131,7 @@ void	fifo_schedule(t_coder *coders)
 	}
 }
 
-void waiter(t_shared *shared)
+void waiter(t_shared *shared, t_coder *coder)
 {
 	pthread_mutex_lock(&shared->mutex);
 	shared->arived++;
@@ -139,7 +155,8 @@ void	*say_alive(void *arg)
 	coder = (t_coder *)arg;
 	monitor = malloc(sizeof(t_monitor));
 	monitor->coder = coder;
-	waiter(coder->shared);
+	waiter(coder->shared, coder);
+	coder->shared->req_count = 0;
 	coder->last_compile = coder->shared->start_time;
 	pthread_create(&monitor->monitor, NULL, monitor_func, monitor);
 	while (coder->compiles_required != 0 && coder->shared->simulation == true)
@@ -167,7 +184,9 @@ void	create_dongles(int n, t_dongle *dongles, char *arg)
 	{
 		dongles[i].id = i;
 		dongles[i].cooldown = cooldown;
+		dongles[i].taken = 0;
 		pthread_mutex_init(&dongles[i].dongle, NULL);
+		pthread_cond_init(&dongles[i].d_cond, NULL);
 		i++;
 	}
 	return ;

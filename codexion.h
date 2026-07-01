@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:25:44 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/06/30 00:58:49 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/01 05:15:17 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,22 @@
 # include <unistd.h>
 # include <stdbool.h>
 
+typedef struct s_request
+{
+	long long		priority;
+	int				id;
+	long long		deadline;
+	long long		timestamp;
+	pthread_mutex_t	req_mutext;
+}	t_request;
+
+typedef struct s_queue
+{
+	int			q_id;
+	
+};
+
+
 typedef struct s_shared
 {
 	pthread_mutex_t		mutex;
@@ -29,6 +45,7 @@ typedef struct s_shared
 	char				*schedule;
 	int					arived;
 	long long			start_time;
+	int					req_count;
 	bool				simulation;
 }	t_shared;
 
@@ -36,13 +53,14 @@ typedef struct s_dongle
 {
 	int					id;
 	pthread_mutex_t		dongle;
+	pthread_cond_t		d_cond;
 	long long			cooldown;
+	int					taken;
 }	t_dongle;
 
 typedef struct s_coder
 {
 	int				id;
-	int				arival_id;
 	int				priority_id;
 	pthread_t		coder;
 	t_dongle		*left_dongle;
