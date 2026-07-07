@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/15 09:35:46 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/06/17 06:28:09 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/07 21:43:12 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,8 +47,10 @@ int	process_args(char **av)
 	{
 		if (!check_if_valid_num(av[i]))
 			error_m2(i);
-		if (atoi(av[i]) < 0)
+		else if (atoi(av[i]) < 0)
 			error_m3();
+		else if (atoi(av[i]) >= 2147483647)
+			error_m4(i);
 		i++;
 	}
 	if ((strcmp(av[i], "fifo") != 0) && (strcmp(av[i], "edf") != 0))

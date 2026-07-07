@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/15 09:48:37 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/06/17 06:28:17 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/07 21:41:52 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,4 +46,22 @@ void	error_m3(void)
 {
 	printf("the numbers schould always be positive\n");
 	exit(1);
+}
+
+void	error_m4(int i)
+{
+	if (i == 1)
+		printf("<numbers_of_coders> should < MAX_INT\n");
+	else if (i == 2)
+		printf("<time_to_bournout> should < MAX_INT\n");
+	else if (i == 3)
+		printf("<time_to_compile> should < MAX_INT\n");
+	else if (i == 4)
+		printf("<time_to_debug> should < MAX_INT\n");
+	else if (i == 5)
+		printf("<time_to_refactor> should < MAX_INT\n");
+	else if (i == 6)
+		printf("<number_of_compiles_required> should < MAX_INT\n");
+	else if (i == 7)
+		printf("<dogle_cooldown> should < MAX_INT\n");
 }

@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:24:43 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/07 20:24:40 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/07 22:10:48 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,8 @@ int	take_a_dongle(t_dongle *dongle, t_coder *coder)
 
 	pthread_mutex_lock(&dongle->dongle);
 	req = make_req(dongle, coder);
+	pthread_mutex_unlock(&dongle->dongle);
+	pthread_mutex_lock(&dongle->dongle);
 	while ((dongle->taken == 1 || req != best_req(dongle))
 		&& simulation(coder->shared))
 		pthread_cond_wait(&dongle->d_cond, &dongle->dongle);
@@ -82,6 +84,7 @@ int	take_a_dongle(t_dongle *dongle, t_coder *coder)
 		dongle->waiting[0] = dongle->waiting[1];
 	dongle->waiting_count--;
 	dongle->taken = 1;
+	pthread_mutex_unlock(&dongle->dongle);
 	if (!simulation(coder->shared))
 	{
 		if (dongle->waiting_count > 0)
@@ -91,7 +94,6 @@ int	take_a_dongle(t_dongle *dongle, t_coder *coder)
 		return (0);
 	}
 	free(req);
-	pthread_mutex_unlock(&dongle->dongle);
 	return (1);
 }
 void print_d_m(int id, long long time, char c, pthread_mutex_t *print)
@@ -219,9 +221,22 @@ void	print_action_m(pthread_mutex_t *print, char c, t_coder *coder)
 	pthread_mutex_unlock(print);
 }
 
+void make_action(long long i, t_coder *coder)
+{
+	long long start;
+
+	start = get_time();
+	while (get_time() - start < i)
+	{
+		if (!simulation(coder->shared))
+			break ;
+		usleep(1000);
+	}
+}
+
 void	actions( t_coder *coder, char c)
 {
-	int	i;
+	long long	i;
 
 	if (c == 'c' && simulation(coder->shared) == true)
 	{
@@ -230,19 +245,19 @@ void	actions( t_coder *coder, char c)
 		coder->last_compile = get_time();
 		pthread_mutex_unlock(&coder->shared->mutex);
 		print_action_m(&coder->shared->print, c, coder);
-		usleep(i * 1000);
+		make_action(i, coder);
 	}
 	else if (c == 'd' && simulation(coder->shared) == true)
 	{
 		i = coder->time_to_debug;
 		print_action_m(&coder->shared->print, c, coder);
-		usleep(i * 1000);
+		make_action(i, coder);
 	}
 	else if (c == 'r' && simulation(coder->shared) == true)
 	{
 		i = coder->time_to_refactor;
 		print_action_m(&coder->shared->print, c, coder);
-		usleep(i * 1000);
+		make_action(i, coder);
 	}
 	return ;
 }
