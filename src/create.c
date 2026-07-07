@@ -6,10 +6,9 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 22:53:36 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/07 22:59:08 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/08 01:24:19 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include "../codexion.h"
 
@@ -55,7 +54,6 @@ void	give_values(t_coder *coders, t_dongle *dongle,
 		coders[i].shared = shared;
 		i++;
 	}
-
 	return ;
 }
 
@@ -96,4 +94,3 @@ void	create_coders(t_coder *coders, t_dongle *dongle,
 	pthread_mutex_destroy(&shared->waiter);
 	return ;
 }
-

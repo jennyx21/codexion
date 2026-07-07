@@ -6,10 +6,9 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 22:39:53 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/07 22:57:02 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/08 01:24:40 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include "../codexion.h"
 

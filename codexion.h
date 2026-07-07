@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:25:44 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/07 21:42:17 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/08 01:25:56 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@ typedef struct s_request
 	int				id;
 	long long		deadline;
 }	t_request;
-
 
 typedef struct s_shared
 {
@@ -78,11 +77,48 @@ typedef struct s_monitor
 	int				coders_finished;
 }	t_monitor;
 
-int		process_args(char **av);
+int			process_args(char **av);
+int			ft_isdigit(int c);
+int			check_if_valid_num(char *str);
 
-void	error_m1(void);
-void	error_m2(int i);
-void	error_m3(void);
-void	error_m4(int i);
+void		error_m1(void);
+void		error_m2(int i);
+void		error_m3(void);
+void		error_m4(int i);
+
+long long	get_time(void);
+bool		simulation(t_shared *shared);
+
+void		print_action_m(pthread_mutex_t *print, char c, t_coder *coder);
+void		make_action(long long i, t_coder *coder);
+void		actions(t_coder *coder, char c);
+
+void		print_d_m(int id, long long time, char c, pthread_mutex_t *print);
+void		take_dongles(t_coder *coder);
+void		releasdongles(t_coder *coder);
+void		wake_up_all_dongles(t_coder *coder);
+
+void		waiter(t_shared *shared, t_coder *coder);
+void		waiter_end(t_shared *shared, t_coder *coder);
+
+void		create_dongles(int n, t_dongle *dongles, char *arg);
+void		create_shared(t_shared *shared);
+void		give_values(t_coder *coders, t_dongle *dongle,
+				t_shared *shared, char **args);
+void		create_coders(t_coder *coders, t_dongle *dongle,
+				t_shared *shared, char **args);
+
+void		change_compiles(t_coder *coder);
+long long	last_copile(t_coder *coder);
+int			read_compiles(t_coder *coder);
+void		set_simulation(t_shared *shared);
+
+void		*monitor_func(void *arg);
+
+t_request	*make_req(t_dongle *dong, t_coder *coder);
+t_request	*best_req(t_dongle *dong);
+int			take_a_dongle(t_dongle *dongle, t_coder *coder);
+
+void		*rutine(void *arg);
 
 #endif

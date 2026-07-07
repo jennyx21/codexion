@@ -1,6 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   waiter.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/08 01:23:46 by jtruckse          #+#    #+#             */
+/*   Updated: 2026/07/08 01:23:54 by jtruckse         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../codexion.h"
 
-void waiter(t_shared *shared, t_coder *coder)
+void	waiter(t_shared *shared, t_coder *coder)
 {
 	pthread_mutex_lock(&shared->waiter);
 	shared->arived++;
@@ -16,7 +28,7 @@ void waiter(t_shared *shared, t_coder *coder)
 	return ;
 }
 
-void waiter_end(t_shared *shared, t_coder *coder)
+void	waiter_end(t_shared *shared, t_coder *coder)
 {
 	pthread_mutex_lock(&shared->waiter);
 	shared->arived--;
@@ -28,4 +40,3 @@ void waiter_end(t_shared *shared, t_coder *coder)
 	pthread_mutex_unlock(&shared->waiter);
 	return ;
 }
-

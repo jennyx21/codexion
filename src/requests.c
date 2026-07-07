@@ -6,12 +6,11 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 22:43:08 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/07 22:56:28 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/08 01:22:28 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../codexion.h"
-
 
 t_request	*make_req(t_dongle *dong, t_coder *coder)
 {

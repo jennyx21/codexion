@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 22:52:38 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/07 22:52:40 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/08 01:26:01 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ void	*rutine(void *arg)
 	waiter_end(coder->shared, coder);
 	set_simulation(coder->shared);
 	pthread_join(monitor->monitor, NULL);
-	wake_up_all_Dongles(coder);
+	wake_up_all_dongles(coder);
 	free(monitor);
 	return (NULL);
 }

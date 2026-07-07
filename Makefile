@@ -8,7 +8,16 @@ OBJDIR   := obj
 
 SRC =	codexion.c\
 		src/error_messages.c\
-		src/parse.c
+		src/parse.c\
+		src/waiter.c\
+		src/timing.c\
+		src/rutine.c\
+		src/requests.c\
+		src/monitor.c\
+		src/dongles.c\
+		src/create.c\
+		src/actions.c\
+		src/read_values.c
 
 OBJ = $(patsubst %.c,$(OBJDIR)/%.o,$(SRC))
 $(NAME): $(OBJ)

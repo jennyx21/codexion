@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 22:45:59 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/07 22:59:26 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/08 01:23:03 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ void	releasdongles(t_coder *coder)
 	pthread_mutex_unlock(&coder->right_dongle->dongle);
 }
 
-void	wake_up_all_Dongles(t_coder *coder)
+void	wake_up_all_dongles(t_coder *coder)
 {
 	pthread_mutex_lock(&coder->left_dongle->dongle);
 	coder->left_dongle->taken = 0;
