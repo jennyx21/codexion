@@ -2,7 +2,7 @@ NAME     := codexion
 CC       := gcc
 AR       := ar
 ARFLAGS  := rcs
-# DEBUGFLAGS := -g -fsanitize=address 
+# DEBUGFLAGS := -g
 CFLAGS   := -Wall -Wextra -Werror -lpthread $(DEBUGFLAGS)
 OBJDIR   := obj
 

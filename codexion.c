@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:24:43 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/01 05:22:07 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/07 20:24:40 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,135 +19,281 @@ long long	get_time(void)
 	gettimeofday(&tv, NULL);
 	return (((long long)tv.tv_sec * 1000 + tv.tv_usec / 1000));
 }
-void take_a_dongle(t_dongle *dongle, t_coder *coder)
+
+bool	simulation(t_shared *shared)
+{
+	bool	signal;
+
+	pthread_mutex_lock(&shared->mutex);
+	signal = shared->simulation;
+	pthread_mutex_unlock(&shared->mutex);
+	return (signal);
+}
+
+t_request	*make_req(t_dongle *dong, t_coder *coder)
 {
 	t_request	*req;
 
 	req = malloc(sizeof(t_request));
+	if (!req)
+		return (0);
 	pthread_mutex_lock(&coder->shared->mutex);
 	coder->shared->req_count++;
 	req->id = coder->shared->req_count;
-	pthread_mutex_unlock(&coder->shared->mutex);
 	req->deadline = coder->last_compile + coder->time_to_burnout;
+	pthread_mutex_unlock(&coder->shared->mutex);
 	if (strcmp(coder->shared->schedule, "fifo") == 0)
 		req->priority = req->id;
 	else
 		req->priority = req->deadline;
-
+	dong->waiting[dong->waiting_count] = req;
+	dong->waiting_count++;
+	return (req);
 }
 
+t_request	*best_req(t_dongle *dong)
+{
+	int			i;
+	t_request	*result;
+
+	if (dong->waiting_count == 0)
+		return (0);
+	result = dong->waiting[0];
+	i = 1;
+	while (i < dong-> waiting_count)
+	{
+		if (dong->waiting[i]->priority < result->priority)
+			result = dong->waiting[i];
+		i++;
+	}
+	return (result);
+}
+
+int	take_a_dongle(t_dongle *dongle, t_coder *coder)
+{
+	t_request	*req;
+
+	pthread_mutex_lock(&dongle->dongle);
+	req = make_req(dongle, coder);
+	while ((dongle->taken == 1 || req != best_req(dongle))
+		&& simulation(coder->shared))
+		pthread_cond_wait(&dongle->d_cond, &dongle->dongle);
+	if (dongle->waiting_count == 2 && dongle->waiting[0] == req)
+		dongle->waiting[0] = dongle->waiting[1];
+	dongle->waiting_count--;
+	dongle->taken = 1;
+	if (!simulation(coder->shared))
+	{
+		if (dongle->waiting_count > 0)
+			dongle->waiting_count--;
+		free(req);
+		pthread_mutex_unlock(&dongle->dongle);
+		return (0);
+	}
+	free(req);
+	pthread_mutex_unlock(&dongle->dongle);
+	return (1);
+}
+void print_d_m(int id, long long time, char c, pthread_mutex_t *print)
+{
+	if (c == 'l')
+	{
+		pthread_mutex_lock(print);
+		printf("%lld coder %d takes the left dongle\n", time, id);
+		pthread_mutex_unlock(print);
+	}
+	else if (c == 'r')
+	{
+		pthread_mutex_lock(print);
+		printf("%lld coder %d takes the right dongle\n", time, id);
+		pthread_mutex_unlock(print);
+	}
+}
 void	take_dongles( t_coder *coder)
 {
-	int	i;
+	int				i;
+	pthread_mutex_t	*p;
 
+	p = &coder->shared->print;
 	i = 0;
-	if (coder->id % 2 == 0 || coder->id == 0)
+	if ((coder->id % 2 == 0 || coder->id == 0) && simulation(coder->shared))
 	{
-		take_a_dongle(coder->left_dongle, coder);
-		printf("%lld coder %d takes the left dongle\n",
-			(get_time() - coder->shared->start_time), coder->id);
-		if (pthread_mutex_lock(&coder->right_dongle->dongle) == 0)
-			printf("%lld coder %d takes the right dongle\n",
-				(get_time() - coder->shared->start_time), coder->id);
+		if (take_a_dongle(coder->left_dongle, coder) != 0)
+			print_d_m(coder->id, (get_time() - coder->shared->go_t), 'l', p);
+		if (take_a_dongle(coder->right_dongle, coder) != 0)
+			print_d_m(coder->id, (get_time() - coder->shared->go_t), 'r', p);
 	}
 	else
 	{
-		if (pthread_mutex_lock(&coder->right_dongle->dongle) == 0)
-			printf("%lld coder %d takes the right dongle\n",
-				(get_time() - coder->shared->start_time), coder->id);
-		if (pthread_mutex_lock(&coder->left_dongle->dongle) == 0)
-			printf("%lld coder %d takes the left dongle\n",
-				(get_time() - coder->shared->start_time), coder->id);
+		if (take_a_dongle(coder->right_dongle, coder) != 0)
+			print_d_m(coder->id, (get_time() - coder->shared->go_t), 'r', p);
+		if (take_a_dongle(coder->left_dongle, coder) != 0)
+			print_d_m(coder->id, (get_time() - coder->shared->go_t), 'l', p);
 	}
 }
 
 void	releasdongles(t_coder *coder)
 {
-	pthread_mutex_unlock(&coder->left_dongle->dongle);
+	pthread_mutex_lock(&coder->left_dongle->dongle);
+	coder->left_dongle->taken = 0;
+	pthread_cond_broadcast(&coder->left_dongle->d_cond);
 	usleep(coder->left_dongle->cooldown * 1000);
-	pthread_mutex_unlock(&coder->right_dongle->dongle);
+	pthread_mutex_unlock(&coder->left_dongle->dongle);
+	pthread_mutex_lock(&coder->right_dongle->dongle);
+	coder->right_dongle->taken = 0;
+	pthread_cond_broadcast(&coder->right_dongle->d_cond);
 	usleep(coder->right_dongle->cooldown * 1000);
-
+	pthread_mutex_unlock(&coder->right_dongle->dongle);
 }
+long long	last_copile(t_coder *coder)
+{
+	long long last;
+
+	pthread_mutex_lock(&coder->shared->mutex);
+	last = coder->last_compile ;
+	pthread_mutex_unlock(&coder->shared->mutex);
+	return (last);
+}
+
+void set_simulation(t_shared *shared)
+{
+	pthread_mutex_lock(&shared->mutex);
+	shared->simulation = false;
+	pthread_mutex_unlock(&shared->mutex);
+}
+
+int read_compiles(t_coder *coder)
+{
+	int	i;
+
+	pthread_mutex_lock(&coder->shared->mutex);
+	i = coder->compiles_required;
+	pthread_mutex_unlock(&coder->shared->mutex);
+	return (i);
+}
+
 void	*monitor_func(void *arg)
 {
-	t_monitor	*monitor;
-	t_coder		*coder;
-	long long	start;
+	t_monitor		*monitor;
+	t_coder			*coder;
+	pthread_mutex_t	*print;
 
 	monitor = (t_monitor *)arg;
 	coder = monitor->coder;
-	while (coder->shared-> simulation == true)
+	print = &coder->shared->print;
+	while (simulation(coder->shared) == true)
 	{
-		if (get_time() - coder->last_compile > coder->time_to_burnout)
+		if ((get_time() - last_copile(coder) > coder->time_to_burnout) && read_compiles(coder) != 0)
 		{
+			pthread_mutex_lock(print);
 			printf("%lld coder %d burnedout\n",
-				get_time() - coder->shared->start_time, coder->id);
-			coder->shared->simulation = false;
-			return NULL;
+				get_time() - coder->shared->go_t, coder->id);
+			pthread_mutex_unlock(print);
+			set_simulation(coder->shared);
+			return (NULL);
 		}
 		usleep(1000);
 	}
 	return (NULL);
 }
+
+void	print_action_m(pthread_mutex_t *print, char c, t_coder *coder)
+{
+	pthread_mutex_lock(print);
+	if (c == 'c')
+	{
+		printf("%lld coder %d compiles\n",
+			(get_time() - coder->shared->go_t), coder->id);
+	}
+	else if (c == 'd')
+	{
+	printf("%lld coder %d is debugging\n",
+		(get_time() - coder->shared->go_t), coder->id);
+	
+	}
+	else if (c == 'r')
+	{
+		printf("%lld coder %d is refactoring\n",
+			(get_time() - coder->shared->go_t), coder->id);
+	}
+	pthread_mutex_unlock(print);
+}
+
 void	actions( t_coder *coder, char c)
 {
 	int	i;
 
-	if (c == 'c' && coder->shared->simulation == true)
+	if (c == 'c' && simulation(coder->shared) == true)
 	{
 		i = coder->time_to_compile;
-		printf("%lld coder %d compiles\n",
-			(get_time() - coder->shared->start_time), coder->id);
-		usleep(i * 1000);
+		pthread_mutex_lock(&coder->shared->mutex);
 		coder->last_compile = get_time();
+		pthread_mutex_unlock(&coder->shared->mutex);
+		print_action_m(&coder->shared->print, c, coder);
+		usleep(i * 1000);
 	}
-	else if (c == 'd' && coder->shared->simulation == true)
+	else if (c == 'd' && simulation(coder->shared) == true)
 	{
 		i = coder->time_to_debug;
-		printf("%lld coder %d is debugging\n",
-			(get_time() - coder->shared->start_time), coder->id);
+		print_action_m(&coder->shared->print, c, coder);
 		usleep(i * 1000);
 	}
-	else if (c == 'r' && coder->shared->simulation == true)
+	else if (c == 'r' && simulation(coder->shared) == true)
 	{
 		i = coder->time_to_refactor;
-		printf("%lld coder %d is refactoring\n",
-			(get_time() - coder->shared->start_time), coder->id);
+		print_action_m(&coder->shared->print, c, coder);
 		usleep(i * 1000);
 	}
 	return ;
-}
-
-void	fifo_schedule(t_coder *coders)
-{
-	int		i;
-
-	i = coders->compiles_required;
-	while (i > 0)
-	{
-		printf("%d\n", i);
-		i--;
-	}
 }
 
 void waiter(t_shared *shared, t_coder *coder)
 {
-	pthread_mutex_lock(&shared->mutex);
+	pthread_mutex_lock(&shared->waiter);
 	shared->arived++;
 	if (shared->arived == shared->nb)
 	{
-		shared->start_time = get_time();
+		shared->go_t = get_time();
 		pthread_cond_broadcast(&shared->cond);
 	}
 	else
 		while (shared->arived < shared->nb)
-			pthread_cond_wait(&shared->cond, &shared->mutex);
-	pthread_mutex_unlock(&shared->mutex);
+			pthread_cond_wait(&shared->cond, &shared->waiter);
+	pthread_mutex_unlock(&shared->waiter);
 	return ;
 }
 
-void	*say_alive(void *arg)
+void wake_up_all_Dongles(t_coder *coder)
+{
+	pthread_mutex_lock(&coder->left_dongle->dongle);
+	coder->left_dongle->taken = 0;
+	pthread_cond_broadcast(&coder->left_dongle->d_cond);
+	pthread_mutex_unlock(&coder->left_dongle->dongle);
+	pthread_mutex_lock(&coder->right_dongle->dongle);
+	coder->right_dongle->taken = 0;
+	pthread_cond_broadcast(&coder->right_dongle->d_cond);
+	pthread_mutex_unlock(&coder->right_dongle->dongle);
+}
+
+void waiter_end(t_shared *shared, t_coder *coder)
+{
+	pthread_mutex_lock(&shared->waiter);
+	shared->arived--;
+	if (shared->arived == 0)
+		pthread_cond_broadcast(&shared->cond);
+	else
+		while (shared->arived > 0)
+			pthread_cond_wait(&shared->cond, &shared->waiter);
+	pthread_mutex_unlock(&shared->waiter);
+	return ;
+}
+void change_compiles(t_coder *coder)
+{
+	pthread_mutex_lock(&coder->shared->mutex);
+	coder->compiles_required--;
+	pthread_mutex_unlock(&coder->shared->mutex);
+}
+void	*rutine(void *arg)
 {
 	t_coder		*coder;
 	t_monitor	*monitor;
@@ -156,21 +302,23 @@ void	*say_alive(void *arg)
 	monitor = malloc(sizeof(t_monitor));
 	monitor->coder = coder;
 	waiter(coder->shared, coder);
-	coder->shared->req_count = 0;
-	coder->last_compile = coder->shared->start_time;
+	coder->last_compile = coder->shared->go_t;
 	pthread_create(&monitor->monitor, NULL, monitor_func, monitor);
-	while (coder->compiles_required != 0 && coder->shared->simulation == true)
+	while (read_compiles(coder) != 0 && simulation(coder->shared) == true)
 	{
 		take_dongles(coder);
 		actions(coder, 'c');
 		releasdongles(coder);
 		actions(coder, 'd');
 		actions(coder, 'r');
-		coder->compiles_required--;
+		change_compiles(coder);
 	}
-	coder->shared->simulation = false;
+	waiter_end(coder->shared, coder);
+	set_simulation(coder->shared);
 	pthread_join(monitor->monitor, NULL);
-	return NULL;
+	wake_up_all_Dongles(coder);
+	free(monitor);
+	return (NULL);
 }
 
 void	create_dongles(int n, t_dongle *dongles, char *arg)
@@ -185,6 +333,7 @@ void	create_dongles(int n, t_dongle *dongles, char *arg)
 		dongles[i].id = i;
 		dongles[i].cooldown = cooldown;
 		dongles[i].taken = 0;
+		dongles[i].waiting_count = 0;
 		pthread_mutex_init(&dongles[i].dongle, NULL);
 		pthread_cond_init(&dongles[i].d_cond, NULL);
 		i++;
@@ -211,10 +360,19 @@ void	give_values(t_coder *coders, t_dongle *dongle, t_shared *shared, char **arg
 		coders[i].time_to_refactor = (long long)atoi(args[5]);
 		coders[i].compiles_required = (long long)atoi(args[6]);
 		coders[i].shared = shared;
-
 		i++;
 	}
+
 	return ;
+}
+void create_shared(t_shared *shared)
+{
+	pthread_cond_init(&shared->cond, NULL);
+	pthread_mutex_init(&shared->mutex, NULL);
+	pthread_mutex_init(&shared->print, NULL);
+	pthread_mutex_init(&shared->waiter, NULL);
+	shared->simulation = true;
+	shared->req_count = 0;
 }
 
 void	create_coders(int n, t_coder *coders, t_dongle *dongle, t_shared *shared, char **args)
@@ -223,14 +381,12 @@ void	create_coders(int n, t_coder *coders, t_dongle *dongle, t_shared *shared, c
 	struct timeval	tv;
 
 	i = 0;
-	pthread_cond_init(&shared->cond, NULL);
-	pthread_mutex_init(&shared->mutex, NULL);
 	gettimeofday(&tv, NULL);
+	create_shared(shared);
 	give_values(coders, dongle, shared, args, n);
-	shared->simulation = true;
 	while (i < n)
 	{
-		pthread_create(&coders[i].coder, NULL, say_alive, &coders[i]);
+		pthread_create(&coders[i].coder, NULL, rutine, &coders[i]);
 		i++;
 	}
 	i = 0;
@@ -241,6 +397,8 @@ void	create_coders(int n, t_coder *coders, t_dongle *dongle, t_shared *shared, c
 	}
 	pthread_mutex_destroy(&shared->mutex);
 	pthread_cond_destroy(&shared->cond);
+	pthread_mutex_destroy(&shared->print);
+	pthread_mutex_destroy(&shared->waiter);
 	return ;
 }
 
@@ -270,4 +428,5 @@ int	main(int ac, char **av)
 	create_coders(n, coders, dongles, shared, av);
 	free(dongles);
 	free(coders);
+	free(shared);
 }

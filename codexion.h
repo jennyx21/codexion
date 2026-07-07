@@ -6,7 +6,7 @@
 /*   By: jtruckse <jtruckse@student.42heilbronn.de> +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/14 12:25:44 by jtruckse          #+#    #+#             */
-/*   Updated: 2026/07/01 05:15:17 by jtruckse         ###   ########.fr       */
+/*   Updated: 2026/07/07 20:00:09 by jtruckse         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,25 +26,19 @@ typedef struct s_request
 	long long		priority;
 	int				id;
 	long long		deadline;
-	long long		timestamp;
-	pthread_mutex_t	req_mutext;
 }	t_request;
-
-typedef struct s_queue
-{
-	int			q_id;
-	
-};
 
 
 typedef struct s_shared
 {
 	pthread_mutex_t		mutex;
+	pthread_mutex_t		print;
+	pthread_mutex_t		waiter;
 	pthread_cond_t		cond;
 	int					nb;
 	char				*schedule;
 	int					arived;
-	long long			start_time;
+	long long			go_t;
 	int					req_count;
 	bool				simulation;
 }	t_shared;
@@ -56,6 +50,8 @@ typedef struct s_dongle
 	pthread_cond_t		d_cond;
 	long long			cooldown;
 	int					taken;
+	t_request			*waiting[2];
+	int					waiting_count;
 }	t_dongle;
 
 typedef struct s_coder
@@ -72,7 +68,6 @@ typedef struct s_coder
 	long long		time_to_refactor;
 	long long		last_compile;
 	int				compiles_required;
-	int				compiles_done;
 }	t_coder;
 
 typedef struct s_monitor
@@ -80,6 +75,7 @@ typedef struct s_monitor
 	pthread_t		monitor;
 	t_coder			*coder;
 	pthread_cond_t	m_cond;
+	int				coders_finished;
 }	t_monitor;
 
 int		process_args(char **av);
